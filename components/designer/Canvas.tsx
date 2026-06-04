@@ -59,7 +59,18 @@ export default function Canvas() {
       setNodes(
         flow.nodes.map((n) => {
           const blockType = (n.data as { blockType: string }).blockType;
-          return { ...n, data: { ...n.data, inputPorts: Object.keys(catalogue[blockType]?.inputs ?? {}) } } as Node;
+          // Template diagrams carry no props, so seed defaults/examples for required
+          // props (e.g. vpc/subnet cidr) — otherwise the fork fails validation.
+          const seeded = initialProps(catalogue[blockType]?.props ?? {});
+          const existing = (n.data as { props?: Record<string, unknown> }).props ?? {};
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              props: { ...seeded, ...existing },
+              inputPorts: Object.keys(catalogue[blockType]?.inputs ?? {}),
+            },
+          } as Node;
         }),
       );
       setEdges(flow.edges as unknown as Edge[]);

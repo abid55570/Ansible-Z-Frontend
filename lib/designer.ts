@@ -199,11 +199,16 @@ export function advisories(ir: IR): string[] {
   return warnings;
 }
 
-/** Initial props for a new node: every prop that declares a default value. */
+/**
+ * Initial props for a new (or forked) node: each prop's default, falling back to
+ * its example for required props so they are never left empty (which would fail
+ * validation the moment a template is forked onto the canvas).
+ */
 export function initialProps(schema: Record<string, PropSpec>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [name, spec] of Object.entries(schema)) {
     if (spec.default !== undefined) out[name] = spec.default;
+    else if (spec.required && spec.example !== undefined) out[name] = spec.example;
   }
   return out;
 }

@@ -187,7 +187,15 @@ describe("advisories", () => {
 });
 
 describe("initialProps", () => {
-  it("seeds only the props that declare a default", () => {
-    expect(initialProps({ a: { default: "x" }, b: { required: true }, c: { default: 5 } })).toEqual({ a: "x", c: 5 });
+  it("seeds defaults, falling back to example only for required props", () => {
+    expect(
+      initialProps({
+        a: { default: "x" },
+        b: { required: true }, // required, no default/example -> skipped
+        c: { default: 5 },
+        d: { required: true, example: "10.0.1.0/24" }, // required, no default -> example
+        e: { example: "opt" }, // optional example -> skipped
+      }),
+    ).toEqual({ a: "x", c: 5, d: "10.0.1.0/24" });
   });
 });
