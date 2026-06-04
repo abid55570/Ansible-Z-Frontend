@@ -162,10 +162,31 @@ export default function WizardPage() {
                   )}
                   Generate &amp; download ({env})
                 </button>
+
+                <p className="mt-3 text-xs text-slate-500">
+                  Exports a complete project: <code>site.yml</code> to provision, plus a Day-2 layer
+                  (<code>apps.yml</code> / <code>deploy.yml</code>) to deploy and update your apps.
+                </p>
               </>
             )}
 
-            {status === "done" && <p className="mt-4 text-sm text-accent">✅ Your project is downloading.</p>}
+            {status === "done" && (
+              <div className="panel mt-6 p-5">
+                <p className="text-sm font-medium text-accent">✅ Your project is downloading.</p>
+                <div className="mt-3 border-t border-white/10 pt-3 text-sm text-slate-300">
+                  <p className="font-semibold text-white">Includes a Day-2 deploy layer</p>
+                  <p className="mt-1 text-slate-400">
+                    Beyond <code>site.yml</code> (provision), the zip ships <code>apps.yml</code>,{" "}
+                    <code>deploy.yml</code> and <code>rollback.yml</code>. Declare your apps in{" "}
+                    <code>apps.yml</code>, then provision and deploy:
+                  </p>
+                  <pre className="mt-2 overflow-x-auto rounded-lg bg-black/40 p-3 text-xs leading-relaxed text-slate-200">
+                    ansible-playbook site.yml{"      "}# provision the infrastructure{"\n"}
+                    ansible-playbook deploy.yml{"    "}# deploy / update your apps (see DAY2.md)
+                  </pre>
+                </div>
+              </div>
+            )}
             {status === "error" && <p className="mt-4 text-sm text-rose-400">{message}</p>}
           </>
         )}

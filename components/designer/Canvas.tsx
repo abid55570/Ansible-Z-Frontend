@@ -128,7 +128,7 @@ export default function Canvas() {
       });
       await api.generate(project.id, "uat");
       window.location.href = api.downloadUrl(project.id, "uat");
-      setStatus("Downloading ✓");
+      setStatus("Downloading ✓ — includes a Day-2 deploy layer (apps.yml / deploy.yml — see DAY2.md)");
     } catch {
       setStatus("Generate failed — sign in, then Validate the design.");
     } finally {

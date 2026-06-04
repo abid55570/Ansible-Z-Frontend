@@ -18,5 +18,23 @@ describe("TemplateGrid", () => {
     expect(screen.getByLabelText("Use Web 3-Tier")).toHaveAttribute("href", "/templates/web-3tier");
     expect(screen.getByText("PCI · capable")).toBeInTheDocument();
     expect(screen.getByText("weird")).toBeInTheDocument(); // unknown pci -> raw fallback
+    // with no starter templates there is no tier heading
+    expect(screen.queryByRole("heading", { name: /Enterprise/ })).toBeNull();
+  });
+
+  it("splits starter and enterprise tiers under headings", () => {
+    render(
+      <TemplateGrid
+        templates={[
+          { slug: "single-vm-app", name: "Single VM", pci: "none", tier: "starter", summary: "s", ready: true },
+          { slug: "web-3tier", name: "Web 3-Tier", pci: "capable", tier: "enterprise", summary: "s2", ready: true },
+        ]}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: /Starter/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Enterprise/ })).toBeInTheDocument();
+    expect(screen.getByLabelText("Use Single VM")).toHaveAttribute("href", "/templates/single-vm-app");
+    expect(screen.getByLabelText("Use Web 3-Tier")).toHaveAttribute("href", "/templates/web-3tier");
   });
 });

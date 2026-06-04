@@ -29,6 +29,7 @@ export interface TemplateSummary {
   slug: string;
   name: string;
   pci: string;
+  tier?: string;
   summary: string;
   ready: boolean;
 }

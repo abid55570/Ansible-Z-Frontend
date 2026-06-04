@@ -36,7 +36,7 @@ function Card({ t }: { t: TemplateSummary }) {
   );
 }
 
-export default function TemplateGrid({ templates }: { templates: TemplateSummary[] }) {
+function Grid({ templates }: { templates: TemplateSummary[] }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {templates.map((t) =>
@@ -49,6 +49,34 @@ export default function TemplateGrid({ templates }: { templates: TemplateSummary
             <Card t={t} />
           </div>
         ),
+      )}
+    </div>
+  );
+}
+
+export default function TemplateGrid({ templates }: { templates: TemplateSummary[] }) {
+  const starter = templates.filter((t) => t.tier === "starter");
+  const enterprise = templates.filter((t) => t.tier !== "starter");
+
+  return (
+    <div className="space-y-8">
+      {starter.length > 0 && (
+        <section>
+          <h3 className="mb-3 text-sm font-semibold text-slate-300">
+            Starter <span className="font-normal text-slate-500">· small, single-purpose — provision in minutes</span>
+          </h3>
+          <Grid templates={starter} />
+        </section>
+      )}
+      {enterprise.length > 0 && (
+        <section>
+          {starter.length > 0 && (
+            <h3 className="mb-3 text-sm font-semibold text-slate-300">
+              Enterprise <span className="font-normal text-slate-500">· full, audit-ready blueprints</span>
+            </h3>
+          )}
+          <Grid templates={enterprise} />
+        </section>
       )}
     </div>
   );
