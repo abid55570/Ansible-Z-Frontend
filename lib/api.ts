@@ -1,4 +1,5 @@
 import type { Variables } from "@/lib/wizard";
+import type { BlockSpec } from "@/lib/designer";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -58,10 +59,13 @@ export const api = {
   me: () => req<{ email: string }>("/auth/me"),
   logout: () => req<{ status: string }>("/auth/logout", { method: "POST" }),
   projects: () => req<Project[]>("/projects"),
-  createProject: (body: { name: string; template_slug: string; config: Record<string, string> }) =>
+  createProject: (body: { name: string; template_slug: string; config: Record<string, unknown> }) =>
     req<Project>("/projects", { method: "POST", body: JSON.stringify(body) }),
   generate: (projectId: number, env: string) =>
     req<Generation>(`/projects/${projectId}/generate`, { method: "POST", body: JSON.stringify({ env }) }),
   downloadUrl: (projectId: number, env: string) =>
     `${BASE}/projects/${projectId}/download?env=${encodeURIComponent(env)}`,
+  blocks: () => req<Record<string, BlockSpec>>("/designs/blocks"),
+  validateDesign: (ir: unknown) =>
+    req<{ valid: boolean; errors: string[] }>("/designs/validate", { method: "POST", body: JSON.stringify(ir) }),
 };

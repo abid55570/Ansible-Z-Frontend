@@ -1,0 +1,69 @@
+import { describe, expect, it } from "vitest";
+import { fromIR, toIR, type Catalogue, type DesignNode, type IR } from "@/lib/designer";
+
+const CAT: Catalogue = {
+  vpc: { inputs: {}, required: ["cidr"], output: "vpc.id" },
+  subnet: { inputs: { vpc: { type: "vpc" } }, required: ["cidr"], output: "subnet.id" },
+  alb: {
+    inputs: { subnets: { type: "subnet", many: true }, security_group: { type: "security_group" } },
+    required: [],
+    output: "dns_name",
+  },
+};
+
+const NODES = [
+  { id: "vpc1", data: { blockType: "vpc", props: { cidr: "10.0.0.0/16" } } },
+  { id: "pub1", data: { blockType: "subnet", props: { cidr: "10.0.1.0/24" } } },
+  { id: "pub2", data: { blockType: "subnet", props: { cidr: "10.0.2.0/24" } } },
+  { id: "alb1", data: { blockType: "alb", props: {} } },
+];
+const EDGES = [
+  { id: "e1", source: "vpc1", target: "pub1", targetHandle: "vpc" },
+  { id: "e2", source: "vpc1", target: "pub2", targetHandle: "vpc" },
+  { id: "e3", source: "pub1", target: "alb1", targetHandle: "subnets" },
+  { id: "e4", source: "pub2", target: "alb1", targetHandle: "subnets" },
+  { id: "e5", source: "x", target: "alb1", targetHandle: null }, // no handle -> ignored
+];
+
+describe("toIR", () => {
+  it("maps single and many inputs and carries meta", () => {
+    const ir = toIR(NODES, EDGES, CAT, { region: "ap-south-1", name: "d" });
+    expect(ir.region).toBe("ap-south-1");
+    expect(ir.nodes.find((n) => n.id === "pub1")!.inputs.vpc).toBe("vpc1");
+    expect(ir.nodes.find((n) => n.id === "alb1")!.inputs.subnets).toEqual(["pub1", "pub2"]);
+  });
+
+  it("leaves unconnected nodes with empty inputs", () => {
+    const ir = toIR([{ id: "vpc1", data: { blockType: "vpc", props: {} } }], [], CAT, { region: "r", name: "n" });
+    expect(ir.nodes[0].inputs).toEqual({});
+  });
+
+  it("tolerates a node whose data has no props", () => {
+    const ir = toIR([{ id: "v", data: { blockType: "vpc" } } as unknown as DesignNode], [], CAT, { region: "r", name: "n" });
+    expect(ir.nodes[0].props).toEqual({});
+  });
+});
+
+describe("fromIR", () => {
+  it("rebuilds nodes and edges (including many)", () => {
+    const ir = toIR(NODES, EDGES, CAT, { region: "r", name: "n" });
+    const { nodes, edges } = fromIR(ir);
+    expect(nodes).toHaveLength(4);
+    expect(edges.filter((e) => e.target === "alb1" && e.targetHandle === "subnets")).toHaveLength(2);
+  });
+
+  it("round-trips inputs back through toIR", () => {
+    const ir = toIR(NODES, EDGES, CAT, { region: "r", name: "n" });
+    const { nodes, edges } = fromIR(ir);
+    const ir2 = toIR(nodes, edges, CAT, { region: "r", name: "n" });
+    expect(ir2.nodes.find((n) => n.id === "alb1")!.inputs.subnets).toEqual(["pub1", "pub2"]);
+    expect(ir2.nodes.find((n) => n.id === "pub1")!.inputs.vpc).toBe("vpc1");
+  });
+
+  it("tolerates nodes without props or inputs", () => {
+    const ir = { version: 1, provider: "aws", region: "r", name: "n", nodes: [{ id: "v", type: "vpc" }] } as unknown as IR;
+    const { nodes, edges } = fromIR(ir);
+    expect(nodes[0].data.props).toEqual({});
+    expect(edges).toEqual([]);
+  });
+});

@@ -71,8 +71,18 @@ export default function DashboardPage() {
             </section>
 
             <section className="mt-12">
-              <h2 className="text-xl font-bold text-white">Start a new project</h2>
-              <p className="mt-1 text-slate-400">Pick a template, then configure it for your environment.</p>
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-bold text-white">Start a new project</h2>
+                  <p className="mt-1 text-slate-400">Pick a template, or design your own architecture from scratch.</p>
+                </div>
+                <Link
+                  href="/designer"
+                  className="shrink-0 rounded-lg border border-brand/40 bg-brand/10 px-4 py-2 text-sm font-medium text-brand-400 transition hover:bg-brand/20"
+                >
+                  Design your own →
+                </Link>
+              </div>
               <div className="mt-6">
                 <TemplateGrid templates={templates} />
               </div>

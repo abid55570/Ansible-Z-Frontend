@@ -73,4 +73,20 @@ describe("api client", () => {
       expect.objectContaining({ method: "POST" }),
     );
   });
+
+  it("blocks() fetches the catalogue", async () => {
+    global.fetch = mockFetch(200, { vpc: { inputs: {}, required: ["cidr"], output: "vpc.id" } }) as never;
+    expect(await api.blocks()).toHaveProperty("vpc");
+  });
+
+  it("validateDesign() POSTs the IR", async () => {
+    const fetchMock = mockFetch(200, { valid: true, errors: [] });
+    global.fetch = fetchMock as never;
+    const result = await api.validateDesign({ nodes: [] });
+    expect(result.valid).toBe(true);
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/designs/validate"),
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
 });
