@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { diagramToFlow, diagramToIR, fromIR, toIR, type Catalogue, type DesignNode, type IR } from "@/lib/designer";
+import {
+  advisories,
+  canConnect,
+  diagramToFlow,
+  diagramToIR,
+  fromIR,
+  toIR,
+  type Catalogue,
+  type DesignNode,
+  type IR,
+} from "@/lib/designer";
 
 const CAT: Catalogue = {
   vpc: { inputs: {}, required: ["cidr"], output: "vpc.id" },
@@ -114,5 +124,63 @@ describe("diagramToIR", () => {
       { region: "r", name: "n" },
     );
     expect(ir.nodes[0].inputs.subnets).toEqual(["x", "y", "z"]);
+  });
+});
+
+describe("canConnect", () => {
+  it("allows a type-matching port and rejects mismatches/unknowns", () => {
+    expect(canConnect(CAT, "vpc", "subnet", "vpc")).toBe(true);
+    expect(canConnect(CAT, "subnet", "subnet", "vpc")).toBe(false); // wrong source type
+    expect(canConnect(CAT, "vpc", "subnet", "nope")).toBe(false); // unknown port
+    expect(canConnect(CAT, "vpc", "subnet", null)).toBe(false); // no handle
+    expect(canConnect(CAT, "vpc", undefined, "vpc")).toBe(false); // no target type
+  });
+});
+
+describe("advisories", () => {
+  it("flags public DBs, open SSH, public instances, and subnet-less VPCs", () => {
+    const ir = {
+      version: 1,
+      provider: "aws",
+      region: "r",
+      name: "n",
+      nodes: [
+        { id: "vpc1", type: "vpc", props: {}, inputs: {} },
+        { id: "db", type: "rds", props: { publicly_accessible: true }, inputs: {} },
+        { id: "sg", type: "security_group", props: { ingress: [{ port: 22 }] }, inputs: {} },
+        { id: "web", type: "ec2_instance", props: { public: true }, inputs: {} },
+      ],
+    };
+    const w = advisories(ir);
+    expect(w.some((m) => m.includes("RDS"))).toBe(true);
+    expect(w.some((m) => m.includes("SSH"))).toBe(true);
+    expect(w.some((m) => m.includes("public IP"))).toBe(true);
+    expect(w.some((m) => m.includes("no subnets"))).toBe(true);
+  });
+
+  it("returns nothing for a clean design", () => {
+    const ir = {
+      version: 1,
+      provider: "aws",
+      region: "r",
+      name: "n",
+      nodes: [
+        { id: "vpc1", type: "vpc", props: {}, inputs: {} },
+        { id: "pub", type: "subnet", props: {}, inputs: { vpc: "vpc1" } },
+        { id: "db", type: "rds", props: {}, inputs: {} }, // not public -> not flagged
+        {
+          id: "sg",
+          type: "security_group",
+          props: { ingress: [{ port: 443, cidr: "0.0.0.0/0" }, { port: 22, cidr: "1.2.3.4/32" }] },
+          inputs: {},
+        },
+      ],
+    };
+    expect(advisories(ir)).toEqual([]);
+  });
+
+  it("tolerates nodes without props and security groups without ingress", () => {
+    const ir = { version: 1, provider: "aws", region: "r", name: "n", nodes: [{ id: "sg", type: "security_group" }] } as unknown as IR;
+    expect(advisories(ir)).toEqual([]);
   });
 });

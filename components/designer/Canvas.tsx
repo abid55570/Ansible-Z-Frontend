@@ -16,7 +16,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import { ArrowLeft, CheckCircle2, Download, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
-import { fromIR, toIR, type Catalogue, type DesignEdge, type DesignNode } from "@/lib/designer";
+import { advisories, canConnect, fromIR, toIR, type Catalogue, type DesignEdge, type DesignNode } from "@/lib/designer";
 import CustomNode from "@/components/designer/CustomNode";
 import Palette from "@/components/designer/Palette";
 import PropertyPanel from "@/components/designer/PropertyPanel";
@@ -78,8 +78,25 @@ export default function Canvas() {
 
   const onConnect = useCallback((c: Connection) => setEdges((es) => addEdge(c, es)), [setEdges]);
 
+  const isValidConnection = useCallback(
+    (c: Edge | Connection) => {
+      const sourceType = (nodes.find((n) => n.id === c.source)?.data as { blockType?: string })?.blockType;
+      const targetType = (nodes.find((n) => n.id === c.target)?.data as { blockType?: string })?.blockType;
+      return canConnect(catalogue, sourceType, targetType, c.targetHandle);
+    },
+    [nodes, catalogue],
+  );
+
   const buildIR = () =>
     toIR(nodes as unknown as DesignNode[], edges as unknown as DesignEdge[], catalogue, { region, name });
+
+  const advisoryList = useMemo(
+    () =>
+      Object.keys(catalogue).length > 0
+        ? advisories(toIR(nodes as unknown as DesignNode[], edges as unknown as DesignEdge[], catalogue, { region, name }))
+        : [],
+    [nodes, edges, catalogue, region, name],
+  );
 
   async function validate() {
     setStatus("Validating…");
@@ -114,6 +131,13 @@ export default function Canvas() {
 
   function updateProps(props: Record<string, unknown>) {
     setNodes((ns) => ns.map((n) => (n.id === selected ? { ...n, data: { ...n.data, props } } : n)));
+  }
+
+  function deleteSelected() {
+    if (!selected) return;
+    setNodes((ns) => ns.filter((n) => n.id !== selected));
+    setEdges((es) => es.filter((e) => e.source !== selected && e.target !== selected));
+    setSelected(null);
   }
 
   return (
@@ -152,6 +176,11 @@ export default function Canvas() {
       </header>
 
       {status && <div className="border-b border-white/10 bg-black/30 px-4 py-1 text-xs text-slate-300">{status}</div>}
+      {advisoryList.length > 0 && (
+        <div className="border-b border-amber-500/20 bg-amber-500/10 px-4 py-1 text-xs text-amber-300">
+          ⚠ {advisoryList.length} advisory: {advisoryList.join("   ·   ")}
+        </div>
+      )}
 
       <div className="flex flex-1 overflow-hidden">
         <Palette blocks={Object.keys(catalogue)} onAdd={addNode} />
@@ -162,8 +191,10 @@ export default function Canvas() {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            isValidConnection={isValidConnection}
             nodeTypes={nodeTypes}
             onNodeClick={(_, n) => setSelected(n.id)}
+            deleteKeyCode={["Backspace", "Delete"]}
             fitView
             proOptions={{ hideAttribution: true }}
           >
@@ -172,10 +203,11 @@ export default function Canvas() {
           </ReactFlow>
         </div>
         <PropertyPanel
-          nodeId={selected}
+          nodeId={selectedNode ? selected : null}
           blockType={selectedNode?.data.blockType as string | undefined}
           props={(selectedNode?.data.props as Record<string, unknown>) ?? {}}
           onChange={updateProps}
+          onDelete={deleteSelected}
         />
       </div>
     </div>

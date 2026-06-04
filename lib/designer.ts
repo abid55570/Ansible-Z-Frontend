@@ -156,3 +156,42 @@ export function diagramToIR(diagram: Diagram, meta: { region: string; name: stri
     nodes: diagram.nodes.map((n) => ({ id: n.id, type: n.type, props: {}, inputs: inputs[n.id] ?? {} })),
   };
 }
+
+// --- canvas polish: connection validation + advisory linter ---
+
+/** True if an edge from a `sourceType` node into `targetType`'s `port` is type-valid. */
+export function canConnect(
+  catalogue: Catalogue,
+  sourceType: string | undefined,
+  targetType: string | undefined,
+  port: string | null | undefined,
+): boolean {
+  if (!port || !targetType) return false;
+  const spec = catalogue[targetType]?.inputs?.[port];
+  return Boolean(spec && spec.type === sourceType);
+}
+
+/** Best-practice warnings for a design (shown live in the canvas). */
+export function advisories(ir: IR): string[] {
+  const warnings: string[] = [];
+  for (const n of ir.nodes) {
+    const props = (n.props ?? {}) as Record<string, unknown>;
+    if (n.type === "rds" && props.publicly_accessible === true) {
+      warnings.push(`${n.id}: RDS is publicly accessible — keep databases private.`);
+    }
+    if (n.type === "ec2_instance" && props.public === true) {
+      warnings.push(`${n.id}: instance has a public IP — prefer a bastion/ALB.`);
+    }
+    if (n.type === "security_group") {
+      for (const rule of (props.ingress as Array<Record<string, unknown>>) ?? []) {
+        if (rule.port === 22 && (rule.cidr ?? "0.0.0.0/0") === "0.0.0.0/0") {
+          warnings.push(`${n.id}: SSH (22) is open to 0.0.0.0/0 — restrict to your IP.`);
+        }
+      }
+    }
+  }
+  if (ir.nodes.some((n) => n.type === "vpc") && !ir.nodes.some((n) => n.type === "subnet")) {
+    warnings.push("VPC has no subnets.");
+  }
+  return warnings;
+}
