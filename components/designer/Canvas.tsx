@@ -16,7 +16,16 @@ import {
 import "@xyflow/react/dist/style.css";
 import { ArrowLeft, CheckCircle2, Download, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
-import { advisories, canConnect, fromIR, toIR, type Catalogue, type DesignEdge, type DesignNode } from "@/lib/designer";
+import {
+  advisories,
+  canConnect,
+  fromIR,
+  initialProps,
+  toIR,
+  type Catalogue,
+  type DesignEdge,
+  type DesignNode,
+} from "@/lib/designer";
 import CustomNode from "@/components/designer/CustomNode";
 import Palette from "@/components/designer/Palette";
 import PropertyPanel from "@/components/designer/PropertyPanel";
@@ -71,7 +80,7 @@ export default function Canvas() {
         id,
         type: "block",
         position: { x: 140 + ns.length * 24, y: 80 + ns.length * 30 },
-        data: { blockType: type, inputPorts, props: {} },
+        data: { blockType: type, inputPorts, props: initialProps(catalogue[type]?.props ?? {}) },
       } as Node),
     );
   };
@@ -205,6 +214,7 @@ export default function Canvas() {
         <PropertyPanel
           nodeId={selectedNode ? selected : null}
           blockType={selectedNode?.data.blockType as string | undefined}
+          schema={catalogue[selectedNode?.data.blockType as string]?.props ?? {}}
           props={(selectedNode?.data.props as Record<string, unknown>) ?? {}}
           onChange={updateProps}
           onDelete={deleteSelected}

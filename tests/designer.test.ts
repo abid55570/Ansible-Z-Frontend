@@ -5,6 +5,7 @@ import {
   diagramToFlow,
   diagramToIR,
   fromIR,
+  initialProps,
   toIR,
   type Catalogue,
   type DesignNode,
@@ -12,11 +13,11 @@ import {
 } from "@/lib/designer";
 
 const CAT: Catalogue = {
-  vpc: { inputs: {}, required: ["cidr"], output: "vpc.id" },
-  subnet: { inputs: { vpc: { type: "vpc" } }, required: ["cidr"], output: "subnet.id" },
+  vpc: { inputs: {}, props: {}, output: "vpc.id" },
+  subnet: { inputs: { vpc: { type: "vpc" } }, props: {}, output: "subnet.id" },
   alb: {
     inputs: { subnets: { type: "subnet", many: true }, security_group: { type: "security_group" } },
-    required: [],
+    props: {},
     output: "dns_name",
   },
 };
@@ -147,7 +148,7 @@ describe("advisories", () => {
       nodes: [
         { id: "vpc1", type: "vpc", props: {}, inputs: {} },
         { id: "db", type: "rds", props: { publicly_accessible: true }, inputs: {} },
-        { id: "sg", type: "security_group", props: { ingress: [{ port: 22 }] }, inputs: {} },
+        { id: "sg", type: "security_group", props: { ssh_cidr: "0.0.0.0/0" }, inputs: {} },
         { id: "web", type: "ec2_instance", props: { public: true }, inputs: {} },
       ],
     };
@@ -182,5 +183,11 @@ describe("advisories", () => {
   it("tolerates nodes without props and security groups without ingress", () => {
     const ir = { version: 1, provider: "aws", region: "r", name: "n", nodes: [{ id: "sg", type: "security_group" }] } as unknown as IR;
     expect(advisories(ir)).toEqual([]);
+  });
+});
+
+describe("initialProps", () => {
+  it("seeds only the props that declare a default", () => {
+    expect(initialProps({ a: { default: "x" }, b: { required: true }, c: { default: 5 } })).toEqual({ a: "x", c: 5 });
   });
 });

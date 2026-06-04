@@ -1,6 +1,13 @@
+export interface PropSpec {
+  type?: string;
+  required?: boolean;
+  default?: unknown;
+  example?: string;
+  guidance?: string;
+}
 export interface BlockSpec {
   inputs: Record<string, { type: string; many?: boolean }>;
-  required: string[];
+  props: Record<string, PropSpec>;
   output: string;
 }
 export type Catalogue = Record<string, BlockSpec>;
@@ -182,16 +189,21 @@ export function advisories(ir: IR): string[] {
     if (n.type === "ec2_instance" && props.public === true) {
       warnings.push(`${n.id}: instance has a public IP — prefer a bastion/ALB.`);
     }
-    if (n.type === "security_group") {
-      for (const rule of (props.ingress as Array<Record<string, unknown>>) ?? []) {
-        if (rule.port === 22 && (rule.cidr ?? "0.0.0.0/0") === "0.0.0.0/0") {
-          warnings.push(`${n.id}: SSH (22) is open to 0.0.0.0/0 — restrict to your IP.`);
-        }
-      }
+    if (n.type === "security_group" && props.ssh_cidr === "0.0.0.0/0") {
+      warnings.push(`${n.id}: SSH (22) is open to 0.0.0.0/0 — restrict to your IP.`);
     }
   }
   if (ir.nodes.some((n) => n.type === "vpc") && !ir.nodes.some((n) => n.type === "subnet")) {
     warnings.push("VPC has no subnets.");
   }
   return warnings;
+}
+
+/** Initial props for a new node: every prop that declares a default value. */
+export function initialProps(schema: Record<string, PropSpec>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [name, spec] of Object.entries(schema)) {
+    if (spec.default !== undefined) out[name] = spec.default;
+  }
+  return out;
 }
