@@ -16,7 +16,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import { ArrowLeft, CheckCircle2, Download, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
-import { toIR, type Catalogue, type DesignEdge, type DesignNode } from "@/lib/designer";
+import { fromIR, toIR, type Catalogue, type DesignEdge, type DesignNode } from "@/lib/designer";
 import CustomNode from "@/components/designer/CustomNode";
 import Palette from "@/components/designer/Palette";
 import PropertyPanel from "@/components/designer/PropertyPanel";
@@ -37,6 +37,30 @@ export default function Canvas() {
   useEffect(() => {
     api.blocks().then(setCatalogue).catch(() => setStatus("Could not load blocks — is the API running on :8000?"));
   }, []);
+
+  // Load a design forked from a template (stashed in sessionStorage) once blocks are known.
+  useEffect(() => {
+    if (Object.keys(catalogue).length === 0) return;
+    const forked = sessionStorage.getItem("az-fork");
+    if (!forked) return;
+    sessionStorage.removeItem("az-fork");
+    try {
+      const ir = JSON.parse(forked);
+      const flow = fromIR(ir);
+      setNodes(
+        flow.nodes.map((n) => {
+          const blockType = (n.data as { blockType: string }).blockType;
+          return { ...n, data: { ...n.data, inputPorts: Object.keys(catalogue[blockType]?.inputs ?? {}) } } as Node;
+        }),
+      );
+      setEdges(flow.edges as unknown as Edge[]);
+      if (ir.name) setName(String(ir.name));
+      if (ir.region) setRegion(String(ir.region));
+      setStatus("Loaded from template — edit, then Validate or Generate.");
+    } catch {
+      /* ignore malformed fork payloads */
+    }
+  }, [catalogue, setNodes, setEdges]);
 
   const addNode = (type: string) => {
     counter += 1;

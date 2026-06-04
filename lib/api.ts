@@ -1,5 +1,5 @@
 import type { Variables } from "@/lib/wizard";
-import type { BlockSpec } from "@/lib/designer";
+import type { BlockSpec, Diagram } from "@/lib/designer";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -37,6 +37,7 @@ export interface TemplateDetail extends TemplateSummary {
   version: string;
   roles: string[];
   variables: Variables;
+  diagram?: Diagram | null;
 }
 
 export interface Project {

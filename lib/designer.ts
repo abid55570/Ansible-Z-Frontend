@@ -94,3 +94,65 @@ export function fromIR(ir: IR): { nodes: PositionedNode[]; edges: DesignEdge[] }
   }
   return { nodes, edges };
 }
+
+// --- template diagrams (read-only single view + "fork to canvas") ---
+
+export interface DiagramNode {
+  id: string;
+  type: string;
+  label?: string;
+}
+export interface DiagramEdge {
+  from: string;
+  to: string;
+  port?: string;
+}
+export interface Diagram {
+  nodes: DiagramNode[];
+  edges: DiagramEdge[];
+}
+
+export interface DiagramFlowNode {
+  id: string;
+  type: "block";
+  position: { x: number; y: number };
+  data: { blockType: string; label: string };
+}
+
+/** A template Diagram -> React-Flow nodes + edges, for the read-only single view. */
+export function diagramToFlow(diagram: Diagram): { nodes: DiagramFlowNode[]; edges: DesignEdge[] } {
+  const nodes: DiagramFlowNode[] = diagram.nodes.map((n, i) => ({
+    id: n.id,
+    type: "block",
+    position: { x: (i % 3) * 230, y: Math.floor(i / 3) * 150 },
+    data: { blockType: n.type, label: n.label ?? n.id },
+  }));
+  const edges: DesignEdge[] = diagram.edges.map((e, i) => ({
+    id: `d-${i}-${e.from}-${e.to}`,
+    source: e.from,
+    target: e.to,
+  }));
+  return { nodes, edges };
+}
+
+/** A template Diagram -> an IR for "fork to canvas" (repeated edges into one port become a list). */
+export function diagramToIR(diagram: Diagram, meta: { region: string; name: string }): IR {
+  const inputs: Record<string, Record<string, string | string[]>> = {};
+  for (const e of diagram.edges) {
+    if (!e.port) continue;
+    const bag = (inputs[e.to] ||= {});
+    if (e.port in bag) {
+      const current = bag[e.port];
+      bag[e.port] = Array.isArray(current) ? [...current, e.from] : [current, e.from];
+    } else {
+      bag[e.port] = e.from;
+    }
+  }
+  return {
+    version: 1,
+    provider: "aws",
+    region: meta.region,
+    name: meta.name,
+    nodes: diagram.nodes.map((n) => ({ id: n.id, type: n.type, props: {}, inputs: inputs[n.id] ?? {} })),
+  };
+}

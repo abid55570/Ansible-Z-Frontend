@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fromIR, toIR, type Catalogue, type DesignNode, type IR } from "@/lib/designer";
+import { diagramToFlow, diagramToIR, fromIR, toIR, type Catalogue, type DesignNode, type IR } from "@/lib/designer";
 
 const CAT: Catalogue = {
   vpc: { inputs: {}, required: ["cidr"], output: "vpc.id" },
@@ -65,5 +65,54 @@ describe("fromIR", () => {
     const { nodes, edges } = fromIR(ir);
     expect(nodes[0].data.props).toEqual({});
     expect(edges).toEqual([]);
+  });
+});
+
+const DIAGRAM = {
+  nodes: [
+    { id: "vpc1", type: "vpc", label: "VPC" },
+    { id: "pub1", type: "subnet" }, // no label -> falls back to id
+    { id: "pub2", type: "subnet", label: "Public B" },
+    { id: "alb1", type: "alb", label: "ALB" },
+  ],
+  edges: [
+    { from: "vpc1", to: "pub1", port: "vpc" },
+    { from: "pub1", to: "alb1", port: "subnets" },
+    { from: "pub2", to: "alb1", port: "subnets" },
+    { from: "vpc1", to: "alb1" }, // no port -> decorative only
+  ],
+};
+
+describe("diagramToFlow", () => {
+  it("builds labelled nodes and edges with target handles", () => {
+    const { nodes, edges } = diagramToFlow(DIAGRAM);
+    expect(nodes.find((n) => n.id === "vpc1")!.data.label).toBe("VPC");
+    expect(nodes.find((n) => n.id === "pub1")!.data.label).toBe("pub1"); // label falls back to id
+    expect(edges).toHaveLength(DIAGRAM.edges.length);
+    expect(edges.some((e) => e.source === "pub1" && e.target === "alb1")).toBe(true);
+  });
+});
+
+describe("diagramToIR", () => {
+  it("forks a diagram into a valid IR (repeated port -> list, no-port skipped)", () => {
+    const ir = diagramToIR(DIAGRAM, { region: "ap-south-1", name: "forked" });
+    expect(ir.region).toBe("ap-south-1");
+    expect(ir.nodes.find((n) => n.id === "pub1")!.inputs.vpc).toBe("vpc1");
+    expect(ir.nodes.find((n) => n.id === "alb1")!.inputs.subnets).toEqual(["pub1", "pub2"]);
+  });
+
+  it("merges three or more edges into one port into a list", () => {
+    const ir = diagramToIR(
+      {
+        nodes: [{ id: "a", type: "alb" }],
+        edges: [
+          { from: "x", to: "a", port: "subnets" },
+          { from: "y", to: "a", port: "subnets" },
+          { from: "z", to: "a", port: "subnets" },
+        ],
+      },
+      { region: "r", name: "n" },
+    );
+    expect(ir.nodes[0].inputs.subnets).toEqual(["x", "y", "z"]);
   });
 });

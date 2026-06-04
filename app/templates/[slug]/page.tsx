@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ArrowLeft, Boxes, Download, Loader2 } from "lucide-react";
+import { ArrowLeft, Boxes, Download, GitFork, Loader2 } from "lucide-react";
 import { api, ApiError, type TemplateDetail } from "@/lib/api";
 import { initialConfig, missingRequired } from "@/lib/wizard";
+import { diagramToIR } from "@/lib/designer";
 import VariableField from "@/components/wizard/VariableField";
+
+const DiagramView = dynamic(() => import("@/components/designer/DiagramView"), { ssr: false });
 
 const ENVS = ["local", "uat", "prod"];
 
@@ -15,6 +19,7 @@ type Status = "loading" | "idle" | "generating" | "done" | "error";
 export default function WizardPage() {
   const params = useParams<{ slug: string }>();
   const slug = String(params.slug);
+  const router = useRouter();
 
   const [tpl, setTpl] = useState<TemplateDetail | null>(null);
   const [env, setEnv] = useState("uat");
@@ -39,6 +44,13 @@ export default function WizardPage() {
 
   function setField(name: string, value: string) {
     setConfig((c) => ({ ...c, [name]: value }));
+  }
+
+  function forkToCanvas() {
+    if (!tpl?.diagram) return;
+    const ir = diagramToIR(tpl.diagram, { region: config.aws_region || "ap-south-1", name: tpl.slug });
+    sessionStorage.setItem("az-fork", JSON.stringify(ir));
+    router.push("/designer");
   }
 
   async function handleGenerate() {
@@ -84,6 +96,21 @@ export default function WizardPage() {
           <>
             <h1 className="text-2xl font-bold text-white">{tpl.name}</h1>
             <p className="mt-1 text-slate-400">{tpl.summary}</p>
+
+            {tpl.diagram && (
+              <div className="mt-6">
+                <div className="mb-2 flex items-center justify-between">
+                  <h2 className="text-sm font-semibold text-slate-300">Architecture</h2>
+                  <button
+                    onClick={forkToCanvas}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-brand/40 bg-brand/10 px-3 py-1.5 text-xs font-medium text-brand-400 transition hover:bg-brand/20"
+                  >
+                    <GitFork className="h-3.5 w-3.5" /> Fork to canvas
+                  </button>
+                </div>
+                <DiagramView diagram={tpl.diagram} />
+              </div>
+            )}
 
             {!tpl.ready ? (
               <div className="panel mt-8 p-6 text-slate-300">
