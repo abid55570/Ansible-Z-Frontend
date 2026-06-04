@@ -4,12 +4,12 @@ import { motion } from "framer-motion";
 import { LayoutTemplate, ListChecks, ShieldCheck, GitBranch, Boxes, TerminalSquare } from "lucide-react";
 
 const FEATURES = [
-  { icon: LayoutTemplate, title: "Template-based", body: "Start from 11 real architectures — 3-tier, EKS, PCI enclave, serverless and more." },
+  { icon: LayoutTemplate, title: "Template-based", body: "Start from 18 real architectures — 3-tier, EKS, ECS Fargate, PCI enclave, data lake and more." },
   { icon: ListChecks, title: "Guided variables", body: "Every input explains what it is and how to get it — with per-environment scoping." },
-  { icon: TerminalSquare, title: "Runs flawlessly", body: "Exports pass yamllint + ansible-lint + --syntax-check before you ever download." },
+  { icon: TerminalSquare, title: "Runs flawlessly", body: "Exports pass yamllint + ansible --syntax-check before you ever download." },
   { icon: ShieldCheck, title: "Secure by default", body: "No committed keys, secrets via vault, one clean env switch. PCI-aware blueprints." },
-  { icon: Boxes, title: "Local → UAT → Prod", body: "Generated setup guide tells your team exactly how to run it on every environment." },
-  { icon: GitBranch, title: "Export to GitHub", body: "Download a zip or push a brand-new repo with CI already wired up." },
+  { icon: Boxes, title: "Day-2 built in", body: "Every export ships a deploy/update/rollback layer — run your apps, not just provision." },
+  { icon: GitBranch, title: "Own your output", body: "Download a complete, portable Ansible project as a zip and run it anywhere." },
 ];
 
 export default function Features() {

@@ -2,8 +2,13 @@ import { describe, expect, it } from "vitest";
 import { TEMPLATES, PCI_LABEL } from "@/lib/templates";
 
 describe("templates catalogue", () => {
-  it("exposes exactly 11 templates", () => {
-    expect(TEMPLATES).toHaveLength(11);
+  it("exposes the full catalogue", () => {
+    expect(TEMPLATES).toHaveLength(18);
+  });
+
+  it("includes the starter tier", () => {
+    const starters = TEMPLATES.filter((t) => t.tier === "starter").map((t) => t.slug);
+    expect(starters).toEqual(["single-vm-app", "simple-static-site", "basic-secure-vpc"]);
   });
 
   it("has unique slugs", () => {

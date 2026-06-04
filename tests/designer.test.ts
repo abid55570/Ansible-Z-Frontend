@@ -184,6 +184,24 @@ describe("advisories", () => {
     const ir = { version: 1, provider: "aws", region: "r", name: "n", nodes: [{ id: "sg", type: "security_group" }] } as unknown as IR;
     expect(advisories(ir)).toEqual([]);
   });
+
+  it("flags nodes that share a CIDR (ignoring empty/missing)", () => {
+    const ir = {
+      version: 1,
+      provider: "aws",
+      region: "r",
+      name: "n",
+      nodes: [
+        { id: "a", type: "subnet", props: { cidr: "10.0.1.0/24" }, inputs: {} },
+        { id: "b", type: "subnet", props: { cidr: "10.0.1.0/24" }, inputs: {} }, // duplicate
+        { id: "c", type: "subnet", props: { cidr: "" }, inputs: {} }, // empty -> ignored
+        { id: "d", type: "vpc", props: {}, inputs: {} }, // missing -> ignored
+        { id: "e", type: "subnet", props: { cidr: "10.0.9.0/24" }, inputs: {} }, // unique -> not flagged
+      ],
+    } as unknown as IR;
+    const w = advisories(ir);
+    expect(w.filter((m) => m.includes("share CIDR"))).toEqual(["a, b: share CIDR 10.0.1.0/24 — give each its own range."]);
+  });
 });
 
 describe("initialProps", () => {

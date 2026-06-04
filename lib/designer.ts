@@ -196,6 +196,17 @@ export function advisories(ir: IR): string[] {
   if (ir.nodes.some((n) => n.type === "vpc") && !ir.nodes.some((n) => n.type === "subnet")) {
     warnings.push("VPC has no subnets.");
   }
+  // Duplicate CIDRs — e.g. two forked subnets both seeded from the same example.
+  const byCidr = new Map<string, string[]>();
+  for (const n of ir.nodes) {
+    const cidr = ((n.props ?? {}) as Record<string, unknown>).cidr;
+    if (typeof cidr === "string" && cidr !== "") {
+      byCidr.set(cidr, [...(byCidr.get(cidr) ?? []), n.id]);
+    }
+  }
+  for (const [cidr, ids] of byCidr) {
+    if (ids.length > 1) warnings.push(`${ids.join(", ")}: share CIDR ${cidr} — give each its own range.`);
+  }
   return warnings;
 }
 

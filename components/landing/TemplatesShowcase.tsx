@@ -14,8 +14,11 @@ export default function TemplatesShowcase() {
   return (
     <section id="templates" className="mx-auto max-w-6xl px-6 py-24">
       <div className="mx-auto max-w-2xl text-center">
-        <h2 className="text-3xl font-bold text-white md:text-4xl">11 infrastructure templates</h2>
-        <p className="mt-4 text-slate-400">From a simple 3-tier app to a PCI-DSS cardholder-data enclave — each one audited and ready.</p>
+        <h2 className="text-3xl font-bold text-white md:text-4xl">{TEMPLATES.length} infrastructure templates</h2>
+        <p className="mt-4 text-slate-400">
+          From a single-VM starter to a PCI-DSS cardholder-data enclave — each one renders to a complete,
+          lint-clean, syntax-checked Ansible project.
+        </p>
       </div>
       <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {TEMPLATES.map((t, i) => (
@@ -34,7 +37,12 @@ export default function TemplatesShowcase() {
               </span>
             </div>
             <p className="mt-2 text-sm text-slate-400">{t.summary}</p>
-            <code className="mt-3 block font-mono text-xs text-slate-600">{t.slug}</code>
+            <div className="mt-3 flex items-center gap-2">
+              <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-500">
+                {t.tier}
+              </span>
+              <code className="font-mono text-xs text-slate-600">{t.slug}</code>
+            </div>
           </motion.div>
         ))}
       </div>
