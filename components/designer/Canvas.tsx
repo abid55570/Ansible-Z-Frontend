@@ -89,7 +89,40 @@ export default function Canvas() {
     }
   }, [catalogue, setNodes, setEdges]);
 
+  const subnetPorts = () => Object.keys(catalogue.subnet?.inputs ?? {});
+
   const addNode = (type: string) => {
+    // Dropping a VPC pre-fills a ready-to-use public + private subnet inside it.
+    if (type === "vpc") {
+      counter += 1;
+      const vpcId = `vpc-${counter}`;
+      counter += 1;
+      const pubId = `subnet-${counter}`;
+      counter += 1;
+      const privId = `subnet-${counter}`;
+      const sub = (cidr: string, pub: boolean) => ({
+        ...initialProps(catalogue.subnet?.props ?? {}),
+        cidr,
+        ...(pub ? { public: true } : {}),
+      });
+      setNodes((ns) =>
+        ns.concat([
+          { id: vpcId, type: "zone", position: { x: 120, y: 60 }, style: { width: 380, height: 470 },
+            data: { blockType: "vpc", inputPorts: [], props: initialProps(catalogue.vpc?.props ?? {}) } },
+          { id: pubId, type: "zone", parentId: vpcId, position: { x: 22, y: 52 }, style: { width: 332, height: 182 },
+            data: { blockType: "subnet", label: "Public subnet", inputPorts: subnetPorts(), props: sub("10.0.1.0/24", true) } },
+          { id: privId, type: "zone", parentId: vpcId, position: { x: 22, y: 254 }, style: { width: 332, height: 182 },
+            data: { blockType: "subnet", label: "Private subnet", inputPorts: subnetPorts(), props: sub("10.0.2.0/24", false) } },
+        ] as Node[]),
+      );
+      setEdges((es) =>
+        es.concat([
+          { id: `e-${vpcId}-${pubId}-vpc`, source: vpcId, target: pubId, targetHandle: "vpc", hidden: true },
+          { id: `e-${vpcId}-${privId}-vpc`, source: vpcId, target: privId, targetHandle: "vpc", hidden: true },
+        ] as Edge[]),
+      );
+      return;
+    }
     counter += 1;
     const id = `${type}-${counter}`;
     const inputPorts = Object.keys(catalogue[type]?.inputs ?? {});
@@ -184,6 +217,10 @@ export default function Canvas() {
     setNodes((ns) => ns.map((n) => (n.id === selected ? { ...n, data: { ...n.data, props } } : n)));
   }
 
+  function updateNote(note: string) {
+    setNodes((ns) => ns.map((n) => (n.id === selected ? { ...n, data: { ...n.data, note } } : n)));
+  }
+
   function deleteSelected() {
     if (!selected) return;
     setNodes((ns) => ns.filter((n) => n.id !== selected));
@@ -266,7 +303,9 @@ export default function Canvas() {
           blockType={selectedNode?.data.blockType as string | undefined}
           schema={catalogue[selectedNode?.data.blockType as string]?.props ?? {}}
           props={(selectedNode?.data.props as Record<string, unknown>) ?? {}}
+          note={selectedNode?.data.note as string | undefined}
           onChange={updateProps}
+          onNoteChange={updateNote}
           onDelete={deleteSelected}
         />
       </div>
