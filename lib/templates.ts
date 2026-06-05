@@ -31,6 +31,9 @@ export const TEMPLATES: TemplateCard[] = [
   { slug: "ecs-fargate-service", name: "ECS Fargate Service", pci: "capable", tier: "enterprise", summary: "Serverless containers behind an Application Load Balancer — no servers to manage." },
   { slug: "static-spa-cloudfront", name: "Static SPA on CloudFront", pci: "none", tier: "enterprise", summary: "A single-page app served globally over HTTPS from a private S3 origin." },
   { slug: "data-lake-analytics", name: "Data Lake + Analytics", pci: "scope-reducer", tier: "enterprise", summary: "An S3 data lake with a Glue crawler + ETL job, query-ready for Athena." },
+  { slug: "kong-ecs-microservices", name: "Kong + ECS Microservices", pci: "capable", tier: "enterprise", summary: "VPN-only access → ALB → Kong API gateway → private ECS Fargate microservices + RDS MySQL." },
+  { slug: "sqs-worker-queue", name: "SQS Worker Queue", pci: "scope-reducer", tier: "enterprise", summary: "Decoupled async processing: SQS queue + dead-letter queue, SNS topic, and a Lambda worker." },
+  { slug: "backup-vault-dr", name: "Centralized Backup Vault", pci: "capable", tier: "enterprise", summary: "AWS Backup vault with a scheduled plan and a tag-based selection across services." },
 ];
 
 export const PCI_LABEL: Record<PciLevel, string> = {
