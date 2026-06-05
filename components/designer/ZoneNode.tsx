@@ -1,6 +1,6 @@
 "use client";
 
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { Handle, NodeResizer, Position, type NodeProps } from "@xyflow/react";
 
 export default function ZoneNode({ data, selected }: NodeProps) {
   const d = data as { blockType?: string; inputPorts?: string[] };
@@ -13,6 +13,12 @@ export default function ZoneNode({ data, selected }: NodeProps) {
         isVpc ? "border-brand/50 bg-brand/[0.06]" : "border-emerald-400/40 bg-emerald-400/[0.06]"
       } ${selected ? "ring-2 ring-brand/60" : ""}`}
     >
+      <NodeResizer
+        minWidth={190}
+        minHeight={120}
+        lineClassName="!border-brand/40"
+        handleClassName="!h-2.5 !w-2.5 !rounded-sm !border-none !bg-brand"
+      />
       <div className="flex items-center gap-1.5 px-3 pt-2 text-[11px] font-semibold uppercase tracking-wide text-slate-300">
         <span className="flex h-5 w-5 items-center justify-center rounded bg-white/95">
           {/* eslint-disable-next-line @next/next/no-img-element */}

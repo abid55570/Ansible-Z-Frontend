@@ -30,9 +30,14 @@ import CustomNode from "@/components/designer/CustomNode";
 import ZoneNode from "@/components/designer/ZoneNode";
 import Palette from "@/components/designer/Palette";
 import PropertyPanel from "@/components/designer/PropertyPanel";
-import { layoutInZones } from "@/components/designer/zones";
+import { layoutInZones, reparentOnDrop } from "@/components/designer/zones";
 
 const nodeTypes = { block: CustomNode, zone: ZoneNode };
+const ZONE_TYPES = new Set(["vpc", "subnet"]);
+const ZONE_SIZE: Record<string, { width: number; height: number }> = {
+  vpc: { width: 360, height: 260 },
+  subnet: { width: 230, height: 180 },
+};
 let counter = 0;
 
 export default function Canvas() {
@@ -88,15 +93,32 @@ export default function Canvas() {
     counter += 1;
     const id = `${type}-${counter}`;
     const inputPorts = Object.keys(catalogue[type]?.inputs ?? {});
+    const isZone = ZONE_TYPES.has(type);
     setNodes((ns) =>
       ns.concat({
         id,
-        type: "block",
-        position: { x: 140 + ns.length * 24, y: 80 + ns.length * 30 },
+        type: isZone ? "zone" : "block",
+        position: { x: 120 + ns.length * 28, y: 70 + ns.length * 26 },
+        ...(isZone ? { style: ZONE_SIZE[type] } : {}),
         data: { blockType: type, inputPorts, props: initialProps(catalogue[type]?.props ?? {}) },
       } as Node),
     );
   };
+
+  // Drag a node onto a VPC/subnet box to nest it (and auto-wire its zone inputs).
+  const onNodeDragStop = useCallback(
+    (_e: unknown, node: Node) => {
+      const live = nodes.map((n) =>
+        n.id === node.id ? ({ ...n, position: node.position, parentId: node.parentId } as Node) : n,
+      );
+      const next = reparentOnDrop(live, edges, node.id, catalogue as unknown as Parameters<typeof reparentOnDrop>[3]);
+      if (next) {
+        setNodes(next.nodes);
+        setEdges(next.edges);
+      }
+    },
+    [nodes, edges, catalogue, setNodes, setEdges],
+  );
 
   const onConnect = useCallback((c: Connection) => setEdges((es) => addEdge(c, es)), [setEdges]);
 
@@ -227,6 +249,7 @@ export default function Canvas() {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onNodeDragStop={onNodeDragStop}
             isValidConnection={isValidConnection}
             nodeTypes={nodeTypes}
             onNodeClick={(_, n) => setSelected(n.id)}

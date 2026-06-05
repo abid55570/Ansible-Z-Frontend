@@ -87,3 +87,109 @@ export function layoutInZones(nodes: Node[], edges: Edge[]): { nodes: Node[]; ed
 
   return { nodes: laidOut, edges: hiddenEdges };
 }
+
+// --- drag a node into a zone to nest it (draw.io style) ---
+
+type Catalogue = Record<string, { inputs: Record<string, { type: string; many?: boolean }> }>;
+
+function bt(n: Node): string {
+  return (n.data as { blockType?: string }).blockType ?? "";
+}
+
+function nodeSize(n: Node): { w: number; h: number } {
+  const s = (n.style ?? {}) as { width?: number | string; height?: number | string };
+  const m = (n as { measured?: { width?: number; height?: number } }).measured;
+  return {
+    w: Number(s.width ?? m?.width ?? (n as { width?: number }).width ?? 150),
+    h: Number(s.height ?? m?.height ?? (n as { height?: number }).height ?? 92),
+  };
+}
+
+function absPos(n: Node, byId: Record<string, Node>): { x: number; y: number } {
+  let x = n.position.x;
+  let y = n.position.y;
+  let p = n.parentId;
+  const seen = new Set<string>();
+  while (p && !seen.has(p) && byId[p]) {
+    seen.add(p);
+    x += byId[p].position.x;
+    y += byId[p].position.y;
+    p = byId[p].parentId;
+  }
+  return { x, y };
+}
+
+/**
+ * Re-parent the dragged node into whichever zone box now contains its centre
+ * (or detach it if dropped on open canvas), and auto-wire its vpc/subnet inputs
+ * to the matching enclosing zone so the design still generates.
+ */
+export function reparentOnDrop(
+  nodes: Node[],
+  edges: Edge[],
+  draggedId: string,
+  catalogue: Catalogue,
+): { nodes: Node[]; edges: Edge[] } | null {
+  const byId = Object.fromEntries(nodes.map((n) => [n.id, n]));
+  const dragged = byId[draggedId];
+  if (!dragged || bt(dragged) === "vpc") return null; // VPC stays top-level
+
+  const dAbs = absPos(dragged, byId);
+  const dSize = nodeSize(dragged);
+  const centre = { x: dAbs.x + dSize.w / 2, y: dAbs.y + dSize.h / 2 };
+
+  const isDescendant = (id: string): boolean => {
+    let p = byId[id]?.parentId;
+    while (p) {
+      if (p === draggedId) return true;
+      p = byId[p]?.parentId;
+    }
+    return false;
+  };
+
+  // innermost zone whose box contains the dragged node's centre
+  let best: Node | null = null;
+  let bestArea = Infinity;
+  for (const z of nodes) {
+    if (z.type !== "zone" || z.id === draggedId || isDescendant(z.id)) continue;
+    if (bt(dragged) === "subnet" && bt(z) !== "vpc") continue; // subnet only nests in a VPC
+    const za = absPos(z, byId);
+    const zs = nodeSize(z);
+    if (centre.x >= za.x && centre.x <= za.x + zs.w && centre.y >= za.y && centre.y <= za.y + zs.h) {
+      const area = zs.w * zs.h;
+      if (area < bestArea) {
+        best = z;
+        bestArea = area;
+      }
+    }
+  }
+
+  if ((best?.id ?? undefined) === dragged.parentId) return null; // nothing changed
+
+  const newPos = best
+    ? { x: dAbs.x - absPos(best, byId).x, y: dAbs.y - absPos(best, byId).y }
+    : dAbs;
+
+  const newNodes = nodes.map((n) =>
+    n.id === draggedId ? ({ ...n, parentId: best?.id, extent: undefined, position: newPos } as Node) : n,
+  );
+
+  // rewire structural inputs: drop old ones, attach to the enclosing zones
+  let newEdges = edges.filter((e) => !(e.target === draggedId && e.targetHandle && STRUCTURAL.has(e.targetHandle)));
+  if (best) {
+    const ancestors: Node[] = [];
+    for (let z: Node | undefined = best; z; z = z.parentId ? byId[z.parentId] : undefined) ancestors.push(z);
+    const inputs = catalogue[bt(dragged)]?.inputs ?? {};
+    for (const [port, spec] of Object.entries(inputs)) {
+      if (spec.type !== "vpc" && spec.type !== "subnet") continue;
+      const anc = ancestors.find((a) => bt(a) === spec.type);
+      if (anc) {
+        newEdges = [...newEdges, { id: `e-${anc.id}-${draggedId}-${port}`, source: anc.id, target: draggedId, targetHandle: port }];
+      }
+    }
+  }
+
+  const rank = (n: Node) => (bt(n) === "vpc" ? 0 : bt(n) === "subnet" ? 1 : 2);
+  newNodes.sort((a, b) => rank(a) - rank(b));
+  return { nodes: newNodes, edges: newEdges };
+}
