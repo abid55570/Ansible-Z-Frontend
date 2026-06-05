@@ -67,6 +67,7 @@ export const api = {
     req<Generation>(`/projects/${projectId}/generate`, { method: "POST", body: JSON.stringify({ env }) }),
   downloadUrl: (projectId: number, env: string) =>
     `${BASE}/projects/${projectId}/download?env=${encodeURIComponent(env)}`,
+  diagramImageUrl: (slug: string) => `${BASE}/templates/${encodeURIComponent(slug)}/diagram.png`,
   blocks: () => req<Record<string, BlockSpec>>("/designs/blocks"),
   validateDesign: (ir: unknown) =>
     req<{ valid: boolean; errors: string[] }>("/designs/validate", { method: "POST", body: JSON.stringify(ir) }),

@@ -58,6 +58,10 @@ describe("api client", () => {
     expect(api.downloadUrl(5, "uat")).toContain("/projects/5/download?env=uat");
   });
 
+  it("diagramImageUrl builds the right URL", () => {
+    expect(api.diagramImageUrl("web-3tier")).toContain("/templates/web-3tier/diagram.png");
+  });
+
   it("projects() lists the user's projects", async () => {
     global.fetch = mockFetch(200, [{ id: 1, name: "p" }]) as never;
     const result = await api.projects();

@@ -27,6 +27,7 @@ export default function WizardPage() {
   const [invalid, setInvalid] = useState<string[]>([]);
   const [status, setStatus] = useState<Status>("loading");
   const [message, setMessage] = useState("");
+  const [imgFailed, setImgFailed] = useState(false);
 
   useEffect(() => {
     api
@@ -108,7 +109,19 @@ export default function WizardPage() {
                     <GitFork className="h-3.5 w-3.5" /> Fork to canvas
                   </button>
                 </div>
-                <DiagramView diagram={tpl.diagram} />
+                {imgFailed ? (
+                  <DiagramView diagram={tpl.diagram} />
+                ) : (
+                  <div className="overflow-hidden rounded-xl border border-white/10 bg-white p-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={api.diagramImageUrl(slug)}
+                      alt={`${tpl.name} architecture diagram`}
+                      className="mx-auto w-full max-w-3xl"
+                      onError={() => setImgFailed(true)}
+                    />
+                  </div>
+                )}
               </div>
             )}
 
