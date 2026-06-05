@@ -3,7 +3,7 @@ import { TEMPLATES, PCI_LABEL } from "@/lib/templates";
 
 describe("templates catalogue", () => {
   it("exposes the full catalogue", () => {
-    expect(TEMPLATES).toHaveLength(21);
+    expect(TEMPLATES).toHaveLength(24);
   });
 
   it("includes the starter tier", () => {

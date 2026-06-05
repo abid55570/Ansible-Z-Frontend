@@ -34,6 +34,9 @@ export const TEMPLATES: TemplateCard[] = [
   { slug: "kong-ecs-microservices", name: "Kong + ECS Microservices", pci: "capable", tier: "enterprise", summary: "VPN-only access → ALB → Kong API gateway → private ECS Fargate microservices + RDS MySQL." },
   { slug: "sqs-worker-queue", name: "SQS Worker Queue", pci: "scope-reducer", tier: "enterprise", summary: "Decoupled async processing: SQS queue + dead-letter queue, SNS topic, and a Lambda worker." },
   { slug: "backup-vault-dr", name: "Centralized Backup Vault", pci: "capable", tier: "enterprise", summary: "AWS Backup vault with a scheduled plan and a tag-based selection across services." },
+  { slug: "api-lambda-dynamodb", name: "Serverless REST API", pci: "scope-reducer", tier: "enterprise", summary: "API Gateway → Lambda → DynamoDB — a fully serverless REST API, scales to zero." },
+  { slug: "cloudtrail-audit", name: "CloudTrail Audit Logging", pci: "core", tier: "enterprise", summary: "Multi-region CloudTrail to a KMS-encrypted S3 bucket and CloudWatch Logs." },
+  { slug: "waf-protected-web", name: "WAF-Protected Web Tier", pci: "capable", tier: "enterprise", summary: "Auto-scaling web tier behind an ALB, fronted by a WAFv2 web ACL." },
 ];
 
 export const PCI_LABEL: Record<PciLevel, string> = {
