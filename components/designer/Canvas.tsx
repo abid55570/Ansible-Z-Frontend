@@ -175,6 +175,17 @@ export default function Canvas() {
     [nodes, edges, catalogue, region, name],
   );
 
+  // Keep zone boxes behind their contents so components stay clickable even
+  // when a zone is selected (zones don't capture clicks meant for inner nodes).
+  const displayNodes = useMemo(
+    () =>
+      nodes.map((n) => {
+        const t = (n.data as { blockType?: string }).blockType;
+        return { ...n, zIndex: t === "vpc" ? 0 : t === "subnet" ? 1 : 5 };
+      }),
+    [nodes],
+  );
+
   function arrange() {
     const { nodes: nn, edges: ee } = layoutInZones(nodes, edges);
     setNodes(nn);
@@ -281,7 +292,7 @@ export default function Canvas() {
         <Palette blocks={Object.keys(catalogue)} onAdd={addNode} />
         <div className="flex-1">
           <ReactFlow
-            nodes={nodes}
+            nodes={displayNodes}
             edges={edges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
@@ -289,6 +300,7 @@ export default function Canvas() {
             onNodeDragStop={onNodeDragStop}
             isValidConnection={isValidConnection}
             nodeTypes={nodeTypes}
+            elevateNodesOnSelect={false}
             onNodeClick={(_, n) => setSelected(n.id)}
             deleteKeyCode={["Backspace", "Delete"]}
             fitView
