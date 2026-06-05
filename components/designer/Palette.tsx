@@ -13,9 +13,13 @@ export default function Palette({ blocks, onAdd }: { blocks: string[]; onAdd: (t
           <button
             key={b}
             onClick={() => onAdd(b)}
-            className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-left font-mono text-xs text-slate-200 transition hover:border-brand/40 hover:text-white"
+            className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-left font-mono text-xs text-slate-200 transition hover:border-brand/40 hover:text-white"
           >
-            + {b}
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-white/95">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`/aws-icons/${b}.png`} alt="" className="h-5 w-5 object-contain" />
+            </span>
+            <span className="truncate">{b}</span>
           </button>
         ))}
         {blocks.length === 0 && <p className="text-xs text-slate-500">Loading blocks…</p>}
