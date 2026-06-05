@@ -14,9 +14,10 @@ export default function ZoneNode({ data, selected }: NodeProps) {
       } ${selected ? "ring-2 ring-brand/60" : ""}`}
     >
       <NodeResizer
+        isVisible={selected}
         minWidth={190}
         minHeight={120}
-        lineClassName="!border-brand/40"
+        lineClassName="!border-brand/50"
         handleClassName="!h-2.5 !w-2.5 !rounded-sm !border-none !bg-brand"
       />
       <div className="flex items-center gap-1.5 px-3 pt-2 text-[11px] font-semibold uppercase tracking-wide text-slate-300">
