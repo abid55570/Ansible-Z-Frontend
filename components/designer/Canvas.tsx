@@ -14,7 +14,7 @@ import {
   type Node,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { ArrowLeft, CheckCircle2, Download, Loader2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Download, LayoutGrid, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 import {
   advisories,
@@ -27,10 +27,12 @@ import {
   type DesignNode,
 } from "@/lib/designer";
 import CustomNode from "@/components/designer/CustomNode";
+import ZoneNode from "@/components/designer/ZoneNode";
 import Palette from "@/components/designer/Palette";
 import PropertyPanel from "@/components/designer/PropertyPanel";
+import { layoutInZones } from "@/components/designer/zones";
 
-const nodeTypes = { block: CustomNode };
+const nodeTypes = { block: CustomNode, zone: ZoneNode };
 let counter = 0;
 
 export default function Canvas() {
@@ -56,27 +58,27 @@ export default function Canvas() {
     try {
       const ir = JSON.parse(forked);
       const flow = fromIR(ir);
-      setNodes(
-        flow.nodes.map((n) => {
-          const blockType = (n.data as { blockType: string }).blockType;
-          // Template diagrams carry no props, so seed defaults/examples for required
-          // props (e.g. vpc/subnet cidr) — otherwise the fork fails validation.
-          const seeded = initialProps(catalogue[blockType]?.props ?? {});
-          const existing = (n.data as { props?: Record<string, unknown> }).props ?? {};
-          return {
-            ...n,
-            data: {
-              ...n.data,
-              props: { ...seeded, ...existing },
-              inputPorts: Object.keys(catalogue[blockType]?.inputs ?? {}),
-            },
-          } as Node;
-        }),
-      );
-      setEdges(flow.edges as unknown as Edge[]);
+      const built = flow.nodes.map((n) => {
+        const blockType = (n.data as { blockType: string }).blockType;
+        // Template diagrams carry no props, so seed defaults/examples for required
+        // props (e.g. vpc/subnet cidr) — otherwise the fork fails validation.
+        const seeded = initialProps(catalogue[blockType]?.props ?? {});
+        const existing = (n.data as { props?: Record<string, unknown> }).props ?? {};
+        return {
+          ...n,
+          data: {
+            ...n.data,
+            props: { ...seeded, ...existing },
+            inputPorts: Object.keys(catalogue[blockType]?.inputs ?? {}),
+          },
+        } as Node;
+      });
+      const arranged = layoutInZones(built, flow.edges as unknown as Edge[]);
+      setNodes(arranged.nodes);
+      setEdges(arranged.edges);
       if (ir.name) setName(String(ir.name));
       if (ir.region) setRegion(String(ir.region));
-      setStatus("Loaded from template — edit, then Validate or Generate.");
+      setStatus("Loaded from template — arranged into zones. Edit, then Validate or Generate.");
     } catch {
       /* ignore malformed fork payloads */
     }
@@ -117,6 +119,13 @@ export default function Canvas() {
         : [],
     [nodes, edges, catalogue, region, name],
   );
+
+  function arrange() {
+    const { nodes: nn, edges: ee } = layoutInZones(nodes, edges);
+    setNodes(nn);
+    setEdges(ee);
+    setStatus("Arranged into VPC / subnet zones.");
+  }
 
   async function validate() {
     setStatus("Validating…");
@@ -179,6 +188,13 @@ export default function Canvas() {
             aria-label="region"
             className="w-32 rounded-md border border-white/10 bg-black/30 px-2 py-1 text-sm text-white"
           />
+          <button
+            onClick={arrange}
+            title="Lay out into VPC / subnet zones"
+            className="inline-flex items-center gap-1 rounded-md border border-white/15 px-3 py-1 text-sm text-slate-200 hover:text-white"
+          >
+            <LayoutGrid className="h-4 w-4" /> Arrange
+          </button>
           <button
             onClick={validate}
             className="inline-flex items-center gap-1 rounded-md border border-white/15 px-3 py-1 text-sm text-slate-200 hover:text-white"
