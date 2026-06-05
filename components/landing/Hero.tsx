@@ -4,6 +4,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { TEMPLATES } from "@/lib/templates";
 
 const HeroScene = dynamic(() => import("@/components/three/HeroScene"), { ssr: false });
 
@@ -36,8 +37,8 @@ export default function Hero() {
         </motion.h1>
 
         <motion.p {...fade(0.16)} className="mx-auto mt-6 max-w-2xl text-lg text-slate-400">
-          Pick a battle-tested template, fill in guided variables, and export a complete, lint-clean Ansible project —
-          with a setup guide written for your team. From weeks of YAML to a few clicks.
+          Pick a battle-tested template — or design your own on a drag-and-drop canvas — fill in guided variables, and
+          export a complete, lint-clean Ansible project. From weeks of YAML to a few clicks.
         </motion.p>
 
         <motion.div {...fade(0.24)} className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -52,12 +53,12 @@ export default function Hero() {
             href="#templates"
             className="rounded-xl border border-white/15 px-6 py-3 font-medium text-slate-200 transition hover:bg-white/5"
           >
-            Explore 11 templates
+            Explore {TEMPLATES.length} templates
           </a>
         </motion.div>
 
         <motion.p {...fade(0.32)} className="mt-6 text-xs text-slate-500">
-          Google sign-in · No credit card · Export to GitHub
+          Google sign-in · No credit card · Own your Ansible project
         </motion.p>
       </div>
     </section>

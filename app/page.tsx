@@ -1,6 +1,7 @@
 import Navbar from "@/components/landing/Navbar";
 import Hero from "@/components/landing/Hero";
 import Stats from "@/components/landing/Stats";
+import ProductPreview from "@/components/landing/ProductPreview";
 import Features from "@/components/landing/Features";
 import HowItWorks from "@/components/landing/HowItWorks";
 import TemplatesShowcase from "@/components/landing/TemplatesShowcase";
@@ -15,6 +16,7 @@ export default function HomePage() {
       <Navbar />
       <Hero />
       <Stats />
+      <ProductPreview />
       <Features />
       <HowItWorks />
       <TemplatesShowcase />
