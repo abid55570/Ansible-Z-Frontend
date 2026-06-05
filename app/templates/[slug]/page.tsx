@@ -112,12 +112,12 @@ export default function WizardPage() {
                 {imgFailed ? (
                   <DiagramView diagram={tpl.diagram} />
                 ) : (
-                  <div className="overflow-hidden rounded-xl border border-white/10 bg-white p-3">
+                  <div className="flex justify-center overflow-hidden rounded-xl border border-white/10 bg-white p-4">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={api.diagramImageUrl(slug)}
                       alt={`${tpl.name} architecture diagram`}
-                      className="mx-auto w-full max-w-3xl"
+                      className="h-auto max-h-[460px] w-auto max-w-full"
                       onError={() => setImgFailed(true)}
                     />
                   </div>
