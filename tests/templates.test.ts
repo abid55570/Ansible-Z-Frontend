@@ -16,9 +16,9 @@ describe("templates catalogue", () => {
     expect(new Set(slugs).size).toBe(slugs.length);
   });
 
-  it("includes the productised VietPay pattern and the PCI enclave", () => {
+  it("includes the bastion-control pattern and the PCI enclave", () => {
     const slugs = TEMPLATES.map((t) => t.slug);
-    expect(slugs).toContain("vietpay-bastion-alb");
+    expect(slugs).toContain("bastion-control-alb");
     expect(slugs).toContain("pci-cde-enclave");
   });
 

@@ -26,7 +26,7 @@ export const TEMPLATES: TemplateCard[] = [
   { slug: "zero-trust", name: "Zero-Trust Access", pci: "core", tier: "enterprise", summary: "SSM, PrivateLink, mTLS, IdP + MFA — no bastion, deny by default." },
   { slug: "serverless-eventdriven", name: "Serverless Event-Driven", pci: "scope-reducer", tier: "enterprise", summary: "API Gateway + Lambda + managed data — minimal audit surface." },
   { slug: "immutable-blue-green", name: "Immutable Blue/Green", pci: "capable", tier: "enterprise", summary: "Golden-AMI pipeline with zero-downtime blue/green deploys." },
-  { slug: "vietpay-bastion-alb", name: "Bastion + Control + ALB", pci: "capable", tier: "enterprise", summary: "Bastion → private Ansible control host → app fleet behind an ALB." },
+  { slug: "bastion-control-alb", name: "Bastion + Control + ALB", pci: "capable", tier: "enterprise", summary: "Bastion → private Ansible control host → app fleet behind an ALB." },
   { slug: "wordpress-lamp", name: "WordPress on LAMP", pci: "none", tier: "enterprise", summary: "A WordPress web server (Apache/PHP) backed by a managed RDS MySQL database." },
   { slug: "ecs-fargate-service", name: "ECS Fargate Service", pci: "capable", tier: "enterprise", summary: "Serverless containers behind an Application Load Balancer — no servers to manage." },
   { slug: "static-spa-cloudfront", name: "Static SPA on CloudFront", pci: "none", tier: "enterprise", summary: "A single-page app served globally over HTTPS from a private S3 origin." },

@@ -31,8 +31,8 @@ describe("VariableField", () => {
     render(
       <VariableField name="project_name" spec={{ required: true }} env="local" value="" invalid={false} onChange={onChange} />,
     );
-    fireEvent.change(screen.getByLabelText(/project_name/), { target: { value: "vietpay" } });
-    expect(onChange).toHaveBeenCalledWith("project_name", "vietpay");
+    fireEvent.change(screen.getByLabelText(/project_name/), { target: { value: "acme" } });
+    expect(onChange).toHaveBeenCalledWith("project_name", "acme");
   });
 
   it("omits the required marker for optional fields and reflects the invalid state", () => {
