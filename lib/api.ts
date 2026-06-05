@@ -34,11 +34,19 @@ export interface TemplateSummary {
   ready: boolean;
 }
 
+export interface SecurityGroupRule {
+  name: string;
+  inbound: string[];
+  outbound: string[];
+}
+
 export interface TemplateDetail extends TemplateSummary {
   version: string;
   roles: string[];
   variables: Variables;
   diagram?: Diagram | null;
+  key_points?: string[];
+  security_groups?: SecurityGroupRule[];
 }
 
 export interface Project {

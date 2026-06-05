@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ArrowLeft, Boxes, Download, GitFork, Loader2 } from "lucide-react";
+import { ArrowLeft, Boxes, CheckCircle2, Download, GitFork, Loader2 } from "lucide-react";
 import { api, ApiError, type TemplateDetail } from "@/lib/api";
 import { initialConfig, missingRequired } from "@/lib/wizard";
 import { diagramToIR } from "@/lib/designer";
@@ -120,6 +120,64 @@ export default function WizardPage() {
                       className="mx-auto w-full max-w-3xl"
                       onError={() => setImgFailed(true)}
                     />
+                  </div>
+                )}
+
+                <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] text-slate-500">
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-3 w-4 rounded border-2 border-brand/50 bg-brand/10" /> VPC / subnet zone
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="flex h-3.5 w-3.5 items-center justify-center rounded bg-white/90 text-[6px] font-bold text-slate-700">
+                      AWS
+                    </span>{" "}
+                    service icon
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-px w-5 bg-slate-500" /> traffic / dependency
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {(tpl.security_groups?.length || tpl.key_points?.length) && (
+              <div className="mt-6 grid gap-4 lg:grid-cols-3">
+                {tpl.security_groups && tpl.security_groups.length > 0 && (
+                  <div className="panel p-5 lg:col-span-2">
+                    <h3 className="text-sm font-semibold text-slate-200">Security groups · key rules</h3>
+                    <div className="mt-3 overflow-x-auto">
+                      <table className="w-full border-collapse text-xs">
+                        <thead>
+                          <tr className="text-left text-slate-500">
+                            <th className="pb-2 pr-3 font-medium">Group</th>
+                            <th className="pb-2 pr-3 font-medium">Inbound</th>
+                            <th className="pb-2 font-medium">Outbound</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {tpl.security_groups.map((sg) => (
+                            <tr key={sg.name} className="border-t border-white/5 align-top">
+                              <td className="whitespace-nowrap py-1.5 pr-3 font-medium text-brand-400">{sg.name}</td>
+                              <td className="py-1.5 pr-3 text-slate-300">{sg.inbound.join("; ") || "—"}</td>
+                              <td className="py-1.5 text-slate-300">{sg.outbound.join("; ") || "—"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+                {tpl.key_points && tpl.key_points.length > 0 && (
+                  <div className="panel p-5">
+                    <h3 className="text-sm font-semibold text-slate-200">Key points</h3>
+                    <ul className="mt-3 space-y-2 text-xs text-slate-300">
+                      {tpl.key_points.map((p, i) => (
+                        <li key={i} className="flex gap-2">
+                          <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
+                          <span>{p}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
               </div>
